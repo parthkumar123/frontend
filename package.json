@@ -1,0 +1,28 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "set APP_ENV=development&& set NODE_MODE=development&& node app.js",
+    "build:development": "set APP_ENV=development&& set NODE_MODE=production&& next build",
+    "build:staging": "set APP_ENV=staging&& set NODE_MODE=production&& next build",
+    "build:production": "set APP_ENV=production&& set NODE_MODE=production&& next build",
+    "dev:start": "set APP_ENV=development&& set NODE_MODE=production&& node app.js",
+    "stag:start": "set APP_ENV=staging&& set NODE_MODE=production&& node app.js",
+    "prod:start": "set APP_ENV=production&& set NODE_MODE=production&& node app.js",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "next": "15.3.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.2",
+    "tailwindcss": "^4"
+  }
+}
