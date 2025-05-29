@@ -13,10 +13,13 @@ export default function Home() {
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
               A secure and modern authentication system built with Next.js and Shadcn UI
             </p>
+            <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl mt-2">
+              Includes a dashboard with task management and visualizations.
+            </p>
           </div>
           <div className="space-x-4">
             <Button asChild>
-              <Link href="/signup">Get Started</Link>
+              <Link href="/dashboard">Go to Dashboard</Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href="/login">Login</Link>
