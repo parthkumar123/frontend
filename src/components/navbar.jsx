@@ -1,15 +1,16 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ThemeToggle } from "./theme-toggle";
 import { Button } from "./ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 export function NavBar() {
     const pathname = usePathname();
-
-    // This would be replaced with your auth check logic
-    const isAuthenticated = true; // Changed to true for development purposes
+    const router = useRouter();
+    const { isAuthenticated, logout } = useAuth();
 
     return (
         <header className="border-b">
@@ -29,8 +30,7 @@ export function NavBar() {
                                 }
                             >
                                 Home
-                            </Link>
-                            <Link
+                            </Link>                            <Link
                                 href="/dashboard"
                                 className={
                                     pathname === "/dashboard"
@@ -39,6 +39,16 @@ export function NavBar() {
                                 }
                             >
                                 Dashboard
+                            </Link>
+                            <Link
+                                href="/profile"
+                                className={
+                                    pathname === "/profile"
+                                        ? "text-primary font-medium"
+                                        : "text-muted-foreground"
+                                }
+                            >
+                                Profile
                             </Link>
                         </nav>
                     )}
@@ -56,16 +66,21 @@ export function NavBar() {
                         </Button>
                     )}
                     {isAuthenticated && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                                // Handle logout
-                                console.log("Logout clicked");
-                            }}
-                        >
-                            Logout
-                        </Button>
+                        <>
+                            <Button variant="outline" size="sm" asChild>
+                                <Link href="/profile">My Profile</Link>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    logout();
+                                    router.push('/login');
+                                }}
+                            >
+                                Logout
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>

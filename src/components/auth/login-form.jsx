@@ -16,6 +16,8 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
     email: z.string().email({ message: "Please enter a valid email address" }),
@@ -30,14 +32,25 @@ export default function LoginForm() {
     } = useForm({
         resolver: zodResolver(loginSchema),
     });
+    const [error, setError] = React.useState(null);
+    const { login } = useAuth();
+    const router = useRouter();
 
     async function onSubmit(data) {
-        // In a real application, you would send the data to your backend API
-        console.log(data);
-        // Simulate a delay to show loading state
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        // Redirect to dashboard or home page after successful login
-        // window.location.href = "/dashboard";
+        try {
+            setError(null);
+            const result = await login(data.email, data.password);
+
+            if (result.success) {
+                console.log('Login successful');
+                router.push('/dashboard');
+            } else {
+                throw new Error(result.error || 'Failed to login');
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError(err.message || 'An error occurred during login');
+        }
     }
 
     return (
@@ -48,6 +61,11 @@ export default function LoginForm() {
             </CardHeader>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <CardContent className="space-y-4">
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md text-sm">
+                            {error}
+                        </div>
+                    )}
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
