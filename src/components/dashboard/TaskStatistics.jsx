@@ -19,10 +19,23 @@ import {
     AreaChart,
     Sector
 } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 
 const TaskStatistics = () => {
-    const { tasks, statistics } = useTaskContext();
+    const { tasks, statistics, loading } = useTaskContext();
+
+    // Helper function to safely format date (handle invalid dates)
+    const safeFormatDate = (dateString, formatStr) => {
+        try {
+            if (!dateString) return null;
+            const date = typeof dateString === 'string' ? parseISO(dateString) : dateString;
+            if (!isValid(date)) return null;
+            return format(date, formatStr);
+        } catch (error) {
+            console.error('Error formatting date:', error);
+            return null;
+        }
+    };
 
     // For Status Chart
     const statusData = [
@@ -53,7 +66,8 @@ const TaskStatistics = () => {
 
     // For Category Chart
     const categoryCounts = tasks.reduce((acc, task) => {
-        acc[task.category] = (acc[task.category] || 0) + 1;
+        const category = task.category || 'uncategorized';
+        acc[category] = (acc[category] || 0) + 1;
         return acc;
     }, {});
 
@@ -76,12 +90,14 @@ const TaskStatistics = () => {
     const weeklyTrendsData = last7Days.map(date => {
         const dateString = format(date, 'yyyy-MM-dd');
         const completed = tasks.filter(task => {
-            const taskDate = format(parseISO(task.createdAt), 'yyyy-MM-dd');
+            if (!task.createdAt) return false;
+            const taskDate = safeFormatDate(task.createdAt, 'yyyy-MM-dd');
             return taskDate === dateString && task.status === 'completed';
         }).length;
 
         const pending = tasks.filter(task => {
-            const taskDate = format(parseISO(task.createdAt), 'yyyy-MM-dd');
+            if (!task.createdAt) return false;
+            const taskDate = safeFormatDate(task.createdAt, 'yyyy-MM-dd');
             return taskDate === dateString && task.status === 'pending';
         }).length;
 
@@ -145,158 +161,133 @@ const TaskStatistics = () => {
                 </text>
             </g>
         );
-    }; return (
+    };
+
+    // Show loading skeleton if data is loading
+    if (loading) {
+        return (
+            <>
+                <Card className="col-span-3">
+                    <CardHeader className="pb-2">
+                        <CardTitle>Task Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex justify-center items-center h-40">
+                        <div className="animate-pulse flex space-x-4 w-full">
+                            <div className="flex-1 space-y-4 py-1">
+                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div className="space-y-2">
+                                    <div className="h-20 bg-gray-200 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="col-span-3">
+                    <CardHeader className="pb-2">
+                        <CardTitle>Weekly Trends</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex justify-center items-center h-60">
+                        <div className="animate-pulse flex space-x-4 w-full">
+                            <div className="flex-1 space-y-4 py-1">
+                                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                <div className="space-y-2">
+                                    <div className="h-40 bg-gray-200 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </>
+        );
+    }
+
+    return (
         <>
-            {/* Task Overview Card with Radial Progress */}
+            {/* Task Overview Card with Progress */}
             <Card className="col-span-3">
                 <CardHeader className="pb-2">
                     <CardTitle>Task Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="flex flex-col items-center justify-center p-4 bg-card rounded-lg shadow-sm border">
-                            <p className="text-sm text-muted-foreground">Total Tasks</p>
-                            <p className="text-4xl font-bold mt-1">{statistics.total}</p>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center p-4 bg-card rounded-lg shadow-sm border">
-                            <p className="text-sm text-muted-foreground">Completed</p>
-                            <p className="text-4xl font-bold mt-1 text-green-600">{statistics.completed}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {statistics.total > 0 ?
-                                    `${Math.round((statistics.completed / statistics.total) * 100)}%` :
-                                    '0%'}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center p-4 bg-card rounded-lg shadow-sm border">
-                            <p className="text-sm text-muted-foreground">Pending</p>
-                            <p className="text-4xl font-bold mt-1 text-amber-500">{statistics.pending}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {statistics.total > 0 ?
-                                    `${Math.round((statistics.pending / statistics.total) * 100)}%` :
-                                    '0%'}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-col items-center justify-center p-4 bg-card rounded-lg shadow-sm border">
-                            <p className="text-sm text-muted-foreground">Overdue</p>
-                            <p className="text-4xl font-bold mt-1 text-red-500">{statistics.overdue}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {statistics.total > 0 ?
-                                    `${Math.round((statistics.overdue / statistics.total) * 100)}%` :
-                                    '0%'}
-                            </p>
-                        </div>
-                    </div>
-                    {/* Progress Visualization - Simple progress bars instead of RadialBarChart */}
-                    {statistics.total > 0 && (
-                        <div className="mt-6 space-y-3">
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-xs">
-                                    <span>Completed</span>
-                                    <span>{Math.round((statistics.completed / statistics.total) * 100)}%</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex flex-col items-center justify-center p-4 rounded-lg border">
+                            <span className="text-sm font-medium text-muted-foreground mb-2">Completed</span>
+                            <div className="relative h-20 w-20">
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-lg font-bold">{statistics.completed}</span>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className="bg-green-600 h-2 rounded-full"
-                                        style={{ width: `${Math.round((statistics.completed / statistics.total) * 100)}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-xs">
-                                    <span>Pending</span>
-                                    <span>{Math.round((statistics.pending / statistics.total) * 100)}%</span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className="bg-amber-500 h-2 rounded-full"
-                                        style={{ width: `${Math.round((statistics.pending / statistics.total) * 100)}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-xs">
-                                    <span>Overdue</span>
-                                    <span>{Math.round((statistics.overdue / statistics.total) * 100)}%</span>
-                                </div>
-                                <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                        className="bg-red-500 h-2 rounded-full"
-                                        style={{ width: `${Math.round((statistics.overdue / statistics.total) * 100)}%` }}
-                                    ></div>
-                                </div>
+                                <svg className="h-20 w-20" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#f3f4f6" strokeWidth="2"></circle>
+                                    <circle
+                                        cx="18" cy="18" r="16" fill="none" stroke="#16a34a" strokeWidth="2"
+                                        strokeDasharray={`${(statistics.completed / statistics.total) * 100}, 100`}
+                                        transform="rotate(-90 18 18)"
+                                    ></circle>
+                                </svg>
                             </div>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
 
-            {/* Task Status Interactive Pie Chart */}
-            <Card className="col-span-3 md:col-span-1">
-                <CardHeader className="pb-2">
-                    <CardTitle>Task Status Distribution</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    activeIndex={activeIndex}
-                                    activeShape={renderActiveShape}
-                                    data={statusData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={50}
-                                    outerRadius={70}
-                                    dataKey="value"
-                                    onMouseEnter={onPieEnter}
-                                >
-                                    {statusData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                            </PieChart>
-                        </ResponsiveContainer>
+                        <div className="flex flex-col items-center justify-center p-4 rounded-lg border">
+                            <span className="text-sm font-medium text-muted-foreground mb-2">Pending</span>
+                            <div className="relative h-20 w-20">
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-lg font-bold">{statistics.pending}</span>
+                                </div>
+                                <svg className="h-20 w-20" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#f3f4f6" strokeWidth="2"></circle>
+                                    <circle
+                                        cx="18" cy="18" r="16" fill="none" stroke="#eab308" strokeWidth="2"
+                                        strokeDasharray={`${(statistics.pending / statistics.total) * 100}, 100`}
+                                        transform="rotate(-90 18 18)"
+                                    ></circle>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center p-4 rounded-lg border">
+                            <span className="text-sm font-medium text-muted-foreground mb-2">Overdue</span>
+                            <div className="relative h-20 w-20">
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="text-lg font-bold">{statistics.overdue}</span>
+                                </div>
+                                <svg className="h-20 w-20" viewBox="0 0 36 36">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#f3f4f6" strokeWidth="2"></circle>
+                                    <circle
+                                        cx="18" cy="18" r="16" fill="none" stroke="#dc2626" strokeWidth="2"
+                                        strokeDasharray={`${(statistics.overdue / statistics.total) * 100}, 100`}
+                                        transform="rotate(-90 18 18)"
+                                    ></circle>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
 
             {/* Weekly Trends Chart */}
-            <Card className="col-span-3 md:col-span-2">
+            {/* <Card className="col-span-3">
                 <CardHeader className="pb-2">
-                    <CardTitle>Weekly Activity</CardTitle>
+                    <CardTitle>Weekly Trends</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="h-64">
+                    <div className="h-60">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart
-                                data={weeklyTrendsData}
-                                margin={{ top: 10, right: 20, left: 0, bottom: 10 }}
-                            >
+                            <AreaChart data={weeklyTrendsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#16a34a" stopOpacity={0.1} />
+                                        <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
                                     </linearGradient>
                                     <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#eab308" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#eab308" stopOpacity={0.1} />
+                                        <stop offset="95%" stopColor="#eab308" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+                                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                                 <XAxis dataKey="name" />
-                                <YAxis allowDecimals={false} />
+                                <YAxis />
                                 <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                                        borderRadius: '8px',
-                                        border: '1px solid #ddd',
-                                        boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-                                    }}
                                     formatter={(value, name) => {
                                         return [value, name.charAt(0).toUpperCase() + name.slice(1)];
                                     }}
@@ -326,7 +317,7 @@ const TaskStatistics = () => {
                         </ResponsiveContainer>
                     </div>
                 </CardContent>
-            </Card>
+            </Card> */}
 
             {/* Task Priority Distribution */}
             <Card className="col-span-3 md:col-span-2">

@@ -16,6 +16,8 @@ import { format } from 'date-fns';
 
 const TaskForm = ({ task, isEditing, onCancel }) => {
     const { addTask, updateTask } = useTaskContext();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState(null);
 
     const initialFormState = {
         title: '',
@@ -49,31 +51,45 @@ const TaskForm = ({ task, isEditing, onCancel }) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(null);
+        setIsSubmitting(true);
 
-        // Format the data
-        const taskData = {
-            ...formData,
-            dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null
-        };
+        try {
+            // Format the data
+            const taskData = {
+                ...formData,
+                dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null
+            };
 
-        if (isEditing) {
-            updateTask(taskData);
-        } else {
-            addTask(taskData);
-        }
+            if (isEditing) {
+                await updateTask(taskData);
+            } else {
+                await addTask(taskData);
+            }
 
-        // Reset form
-        setFormData(initialFormState);
-        if (isEditing && onCancel) {
-            onCancel();
+            // Reset form
+            setFormData(initialFormState);
+            if (isEditing && onCancel) {
+                onCancel();
+            }
+        } catch (error) {
+            setError(error.message || 'An error occurred while saving the task');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     return (
         <form onSubmit={handleSubmit}>
             <div className="grid gap-4">
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md text-sm">
+                        {error}
+                    </div>
+                )}
+
                 <div>
                     <label htmlFor="title" className="block text-sm font-medium mb-1">
                         Title
@@ -85,6 +101,7 @@ const TaskForm = ({ task, isEditing, onCancel }) => {
                         onChange={handleChange}
                         placeholder="Task title"
                         required
+                        disabled={isSubmitting}
                     />
                 </div>
 
@@ -100,6 +117,7 @@ const TaskForm = ({ task, isEditing, onCancel }) => {
                         placeholder="Task description"
                         className="resize-none"
                         rows={3}
+                        disabled={isSubmitting}
                     />
                 </div>
 
@@ -110,6 +128,7 @@ const TaskForm = ({ task, isEditing, onCancel }) => {
                     <Select
                         value={formData.priority}
                         onValueChange={(value) => handleSelectChange('priority', value)}
+                        disabled={isSubmitting}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Select priority" />
@@ -129,6 +148,7 @@ const TaskForm = ({ task, isEditing, onCancel }) => {
                     <Select
                         value={formData.category}
                         onValueChange={(value) => handleSelectChange('category', value)}
+                        disabled={isSubmitting}
                     >
                         <SelectTrigger>
                             <SelectValue placeholder="Select category" />
@@ -151,6 +171,7 @@ const TaskForm = ({ task, isEditing, onCancel }) => {
                         <Select
                             value={formData.status}
                             onValueChange={(value) => handleSelectChange('status', value)}
+                            disabled={isSubmitting}
                         >
                             <SelectTrigger>
                                 <SelectValue placeholder="Select status" />
@@ -173,15 +194,24 @@ const TaskForm = ({ task, isEditing, onCancel }) => {
                         type="date"
                         value={formData.dueDate}
                         onChange={handleChange}
+                        disabled={isSubmitting}
                     />
                 </div>
 
                 <div className="flex gap-2">
-                    <Button type="submit">
-                        {isEditing ? 'Update Task' : 'Add Task'}
+                    <Button type="submit" disabled={isSubmitting}>
+                        {isSubmitting
+                            ? (isEditing ? 'Updating...' : 'Adding...')
+                            : (isEditing ? 'Update Task' : 'Add Task')
+                        }
                     </Button>
                     {isEditing && (
-                        <Button type="button" variant="outline" onClick={onCancel}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onCancel}
+                            disabled={isSubmitting}
+                        >
                             Cancel
                         </Button>
                     )}

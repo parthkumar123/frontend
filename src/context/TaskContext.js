@@ -27,29 +27,36 @@ const taskReducer = (state, action) => {
                 tasks: action.payload,
                 statistics: calculateStatistics(action.payload),
                 loading: false,
+                error: null,
             };
-        case 'ADD_TASK':
+        case 'ADD_TASK_SUCCESS':
             const updatedTasksAdd = [...state.tasks, action.payload];
             return {
                 ...state,
                 tasks: updatedTasksAdd,
                 statistics: calculateStatistics(updatedTasksAdd),
+                loading: false,
+                error: null,
             };
-        case 'UPDATE_TASK':
+        case 'UPDATE_TASK_SUCCESS':
             const updatedTasks = state.tasks.map((task) =>
-                task.id === action.payload.id ? action.payload : task
+                task._id === action.payload._id ? action.payload : task
             );
             return {
                 ...state,
                 tasks: updatedTasks,
                 statistics: calculateStatistics(updatedTasks),
+                loading: false,
+                error: null,
             };
-        case 'DELETE_TASK':
-            const filteredTasks = state.tasks.filter((task) => task.id !== action.payload);
+        case 'DELETE_TASK_SUCCESS':
+            const filteredTasks = state.tasks.filter((task) => task._id !== action.payload);
             return {
                 ...state,
                 tasks: filteredTasks,
                 statistics: calculateStatistics(filteredTasks),
+                loading: false,
+                error: null,
             };
         case 'SET_LOADING':
             return {
@@ -86,97 +93,145 @@ const calculateStatistics = (tasks) => {
 export const TaskProvider = ({ children }) => {
     const [state, dispatch] = useReducer(taskReducer, initialState);
 
-    // Load tasks from local storage on initial render
-    useEffect(() => {
-        const storedTasks = localStorage.getItem('tasks');
-        if (storedTasks) {
-            dispatch({ type: 'FETCH_TASKS', payload: JSON.parse(storedTasks) });
-        } else {
-            // Sample data for demonstration
-            const sampleTasks = [
-                {
-                    id: '1',
-                    title: 'Complete Project Proposal',
-                    description: 'Draft and submit the project proposal with timeline',
-                    status: 'completed',
-                    priority: 'high',
-                    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                    dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                    category: 'work'
-                },
-                {
-                    id: '2',
-                    title: 'Review Pull Requests',
-                    description: 'Review and merge team pull requests',
-                    status: 'pending',
-                    priority: 'medium',
-                    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-                    dueDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-                    category: 'development'
-                },
-                {
-                    id: '3',
-                    title: 'Team Meeting',
-                    description: 'Weekly team sync up',
-                    status: 'pending',
-                    priority: 'high',
-                    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                    dueDate: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
-                    category: 'meeting'
-                },
-                {
-                    id: '4',
-                    title: 'Client Call',
-                    description: 'Monthly progress update with client',
-                    status: 'pending',
-                    priority: 'high',
-                    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-                    dueDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                    category: 'meeting'
-                },
-                {
-                    id: '5',
-                    title: 'Update Documentation',
-                    description: 'Update project wiki with latest changes',
-                    status: 'completed',
-                    priority: 'low',
-                    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-                    dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-                    category: 'documentation'
+    // Function to get authentication token
+    const getAuthToken = () => {
+        return localStorage.getItem('authToken');
+    };
+
+    // Fetch all tasks from API
+    const fetchTasks = async () => {
+        try {
+            dispatch({ type: 'SET_LOADING', payload: true });
+
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            const response = await fetch('http://localhost:3000/tasks', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
                 }
-            ];
+            });
 
-            dispatch({ type: 'FETCH_TASKS', payload: sampleTasks });
-            localStorage.setItem('tasks', JSON.stringify(sampleTasks));
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to fetch tasks');
+            }
+
+            const data = await response.json();
+            dispatch({ type: 'FETCH_TASKS', payload: data });
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+            dispatch({ type: 'SET_ERROR', payload: error.message });
         }
-    }, []);
+    };
 
-    // Save tasks to local storage whenever tasks change
+    // Add a new task via API
+    const addTask = async (task) => {
+        try {
+            dispatch({ type: 'SET_LOADING', payload: true });
+
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            const response = await fetch('http://localhost:3000/tasks', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(task)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create task');
+            }
+
+            const newTask = await response.json();
+            dispatch({ type: 'ADD_TASK_SUCCESS', payload: newTask });
+            return newTask;
+        } catch (error) {
+            console.error('Error creating task:', error);
+            dispatch({ type: 'SET_ERROR', payload: error.message });
+            throw error;
+        }
+    };
+
+    // Update a task via API
+    const updateTask = async (task) => {
+        try {
+            dispatch({ type: 'SET_LOADING', payload: true });
+
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            const response = await fetch(`http://localhost:3000/tasks/${task._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(task)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to update task');
+            }
+
+            const updatedTask = await response.json();
+            dispatch({ type: 'UPDATE_TASK_SUCCESS', payload: updatedTask });
+            return updatedTask;
+        } catch (error) {
+            console.error('Error updating task:', error);
+            dispatch({ type: 'SET_ERROR', payload: error.message });
+            throw error;
+        }
+    };
+
+    // Delete a task via API
+    const deleteTask = async (taskId) => {
+        try {
+            dispatch({ type: 'SET_LOADING', payload: true });
+
+            const token = getAuthToken();
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+
+            const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to delete task');
+            }
+
+            dispatch({ type: 'DELETE_TASK_SUCCESS', payload: taskId });
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            dispatch({ type: 'SET_ERROR', payload: error.message });
+            throw error;
+        }
+    };
+
+    // Load tasks from API on initial render
     useEffect(() => {
-        if (state.tasks.length > 0) {
-            localStorage.setItem('tasks', JSON.stringify(state.tasks));
-        }
-    }, [state.tasks]);
-
-    // Function to add a new task
-    const addTask = (task) => {
-        const newTask = {
-            ...task,
-            id: Date.now().toString(),
-            createdAt: new Date().toISOString(),
-        };
-        dispatch({ type: 'ADD_TASK', payload: newTask });
-    };
-
-    // Function to update a task
-    const updateTask = (task) => {
-        dispatch({ type: 'UPDATE_TASK', payload: task });
-    };
-
-    // Function to delete a task
-    const deleteTask = (taskId) => {
-        dispatch({ type: 'DELETE_TASK', payload: taskId });
-    };
+        fetchTasks();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
         <TaskContext.Provider
@@ -185,6 +240,7 @@ export const TaskProvider = ({ children }) => {
                 statistics: state.statistics,
                 loading: state.loading,
                 error: state.error,
+                fetchTasks,
                 addTask,
                 updateTask,
                 deleteTask

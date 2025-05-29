@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { RefreshCcw } from 'lucide-react';
+import { useTaskContext } from '@/context/TaskContext';
 import TaskStatistics from './TaskStatistics';
 import TaskList from './TaskList';
 import TaskForm from './TaskForm';
 
 const DashboardLayout = () => {
+    const { loading, error, fetchTasks } = useTaskContext();
     const [selectedTask, setSelectedTask] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
 
@@ -19,10 +23,28 @@ const DashboardLayout = () => {
     const handleCancelEdit = () => {
         setSelectedTask(null);
         setIsEditing(false);
-    }; return (
+    };
+
+    const handleRefresh = () => {
+        fetchTasks();
+    };
+
+    return (
         <div className="container mx-auto px-4 py-6">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Dashboard</h1>
+                <div className="flex items-center">
+                    <h1 className="text-3xl font-bold">Dashboard</h1>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="ml-2"
+                        onClick={handleRefresh}
+                        disabled={loading}
+                    >
+                        <RefreshCcw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                        <span className="sr-only">Refresh</span>
+                    </Button>
+                </div>
                 <div className="text-sm text-muted-foreground">
                     {new Date().toLocaleDateString('en-US', {
                         weekday: 'long',
@@ -32,6 +54,15 @@ const DashboardLayout = () => {
                     })}
                 </div>
             </div>
+
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6 flex justify-between items-center">
+                    <span>Error: {error}</span>
+                    <Button variant="outline" size="sm" onClick={handleRefresh}>
+                        <RefreshCcw className="h-4 w-4 mr-1" /> Retry
+                    </Button>
+                </div>
+            )}
 
             {/* Statistics Section - Full Width */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
