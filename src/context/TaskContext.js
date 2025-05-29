@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { TASK_ENDPOINTS } from '../config/api';
 
 // Create Task Context
 const TaskContext = createContext();
@@ -108,7 +109,7 @@ export const TaskProvider = ({ children }) => {
                 throw new Error('Authentication required');
             }
 
-            const response = await fetch('http://localhost:3000/tasks', {
+            const response = await fetch(TASK_ENDPOINTS.GET_ALL, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -139,7 +140,7 @@ export const TaskProvider = ({ children }) => {
                 throw new Error('Authentication required');
             }
 
-            const response = await fetch('http://localhost:3000/tasks', {
+            const response = await fetch(TASK_ENDPOINTS.CREATE, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -173,7 +174,7 @@ export const TaskProvider = ({ children }) => {
                 throw new Error('Authentication required');
             }
 
-            const response = await fetch(`http://localhost:3000/tasks/${task._id}`, {
+            const response = await fetch(TASK_ENDPOINTS.UPDATE(task._id), {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -207,7 +208,7 @@ export const TaskProvider = ({ children }) => {
                 throw new Error('Authentication required');
             }
 
-            const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+            const response = await fetch(TASK_ENDPOINTS.DELETE(taskId), {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,

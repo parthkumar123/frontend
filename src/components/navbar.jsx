@@ -16,21 +16,12 @@ export function NavBar() {
         <header className="border-b">
             <div className="container flex h-16 items-center justify-between px-4 md:px-6">
                 <div className="flex items-center gap-2 md:gap-4">
-                    <Link href="/" className="text-xl font-semibold">
+                    <Link href="/dashboard" className="text-xl font-semibold">
                         Dev Board
                     </Link>
                     {isAuthenticated && (
                         <nav className="hidden md:flex gap-6 ml-6">
                             <Link
-                                href="/"
-                                className={
-                                    pathname === "/"
-                                        ? "text-primary font-medium"
-                                        : "text-muted-foreground"
-                                }
-                            >
-                                Home
-                            </Link>                            <Link
                                 href="/dashboard"
                                 className={
                                     pathname === "/dashboard"

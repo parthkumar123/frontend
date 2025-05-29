@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AUTH_ENDPOINTS } from '../config/api';
 
 // Create Authentication Context
 const AuthContext = createContext();
@@ -33,7 +34,7 @@ export function AuthProvider({ children }) {
     // Login function
     const login = async (email, password) => {
         try {
-            const response = await fetch('http://localhost:3000/auth/login', {
+            const response = await fetch(AUTH_ENDPOINTS.LOGIN, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -64,7 +65,7 @@ export function AuthProvider({ children }) {
     // Signup function
     const signup = async (email, password, name) => {
         try {
-            const response = await fetch('http://localhost:3000/auth/signup', {
+            const response = await fetch(AUTH_ENDPOINTS.SIGNUP, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,7 +88,7 @@ export function AuthProvider({ children }) {
     // Forgot password function
     const forgotPassword = async (email) => {
         try {
-            const response = await fetch('http://localhost:3000/auth/forgot-password', {
+            const response = await fetch(AUTH_ENDPOINTS.FORGOT_PASSWORD, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -109,7 +110,7 @@ export function AuthProvider({ children }) {
     // Reset password function
     const resetPassword = async (token, password) => {
         try {
-            const response = await fetch('http://localhost:3000/auth/reset-password', {
+            const response = await fetch(AUTH_ENDPOINTS.RESET_PASSWORD, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -137,7 +138,7 @@ export function AuthProvider({ children }) {
                 return { success: false, error: 'No token found' };
             }
 
-            const response = await fetch('http://localhost:3000/auth/refresh-token', {
+            const response = await fetch(AUTH_ENDPOINTS.REFRESH_TOKEN, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

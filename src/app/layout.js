@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Authentication Demo",
-  description: "A demo of authentication with Next.js and Shadcn UI",
+  title: "Dashboard",
+  description: "Dashboard for managing your tasks and projects",
 };
 
 export default function RootLayout({ children }) {

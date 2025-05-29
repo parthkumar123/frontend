@@ -15,6 +15,10 @@ const nextConfig = {
             },
         ],
     },
+    // Expose API endpoint to the browser
+    env: {
+        API_BASE_URL: process.env.API_BASE_URL
+    },
 };
 
 export default nextConfig;
