@@ -16,8 +16,7 @@ const dev = process.env.NODE_MODE === "development";
 const app = next({ dev });
 
 app.prepare().then(() => {
-    // No need for express server setup
-    const { createServer } = require('http'); // Require the Node.js HTTP module
+    const { createServer } = require('http');
     createServer((req, res) => {
         // Pass request and response to Next.js request handler
         app.getRequestHandler()(req, res);

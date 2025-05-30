@@ -12,37 +12,12 @@ import {
     XAxis,
     YAxis,
     Tooltip,
-    Legend,
     ResponsiveContainer,
     CartesianGrid,
-    Area,
-    AreaChart,
-    Sector
 } from 'recharts';
-import { format, parseISO, isValid } from 'date-fns';
 
 const TaskStatistics = () => {
     const { tasks, statistics, loading } = useTaskContext();
-
-    // Helper function to safely format date (handle invalid dates)
-    const safeFormatDate = (dateString, formatStr) => {
-        try {
-            if (!dateString) return null;
-            const date = typeof dateString === 'string' ? parseISO(dateString) : dateString;
-            if (!isValid(date)) return null;
-            return format(date, formatStr);
-        } catch (error) {
-            console.error('Error formatting date:', error);
-            return null;
-        }
-    };
-
-    // For Status Chart
-    const statusData = [
-        { name: 'Completed', value: statistics.completed, color: '#16a34a' },
-        { name: 'Pending', value: statistics.pending, color: '#eab308' },
-        { name: 'Overdue', value: statistics.overdue, color: '#dc2626' }
-    ];
 
     // For Priority Chart
     const priorityCounts = tasks.reduce((acc, task) => {
@@ -78,90 +53,6 @@ const TaskStatistics = () => {
         value: categoryCounts[category],
         color: colorPalette[index % colorPalette.length]
     }));
-
-    // For Weekly Trends Chart
-    const today = new Date();
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date();
-        date.setDate(today.getDate() - (6 - i));
-        return date;
-    });
-
-    const weeklyTrendsData = last7Days.map(date => {
-        const dateString = format(date, 'yyyy-MM-dd');
-        const completed = tasks.filter(task => {
-            if (!task.createdAt) return false;
-            const taskDate = safeFormatDate(task.createdAt, 'yyyy-MM-dd');
-            return taskDate === dateString && task.status === 'completed';
-        }).length;
-
-        const pending = tasks.filter(task => {
-            if (!task.createdAt) return false;
-            const taskDate = safeFormatDate(task.createdAt, 'yyyy-MM-dd');
-            return taskDate === dateString && task.status === 'pending';
-        }).length;
-
-        return {
-            name: format(date, 'EEE'),
-            completed,
-            pending,
-            total: completed + pending
-        };
-    });
-
-    // Active shape for enhanced pie chart
-    const [activeIndex, setActiveIndex] = React.useState(0);
-
-    const onPieEnter = (_, index) => {
-        setActiveIndex(index);
-    };
-
-    const renderActiveShape = (props) => {
-        const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle,
-            fill, payload, percent, value } = props;
-        const sin = Math.sin(-midAngle * Math.PI / 180);
-        const cos = Math.cos(-midAngle * Math.PI / 180);
-        const sx = cx + (outerRadius + 10) * cos;
-        const sy = cy + (outerRadius + 10) * sin;
-        const mx = cx + (outerRadius + 30) * cos;
-        const my = cy + (outerRadius + 30) * sin;
-        const ex = mx + (cos >= 0 ? 1 : -1) * 22;
-        const ey = my;
-        const textAnchor = cos >= 0 ? 'start' : 'end';
-
-        return (
-            <g>
-                <Sector
-                    cx={cx}
-                    cy={cy}
-                    innerRadius={innerRadius}
-                    outerRadius={outerRadius}
-                    startAngle={startAngle}
-                    endAngle={endAngle}
-                    fill={fill}
-                    opacity={0.9}
-                />
-                <Sector
-                    cx={cx}
-                    cy={cy}
-                    startAngle={startAngle}
-                    endAngle={endAngle}
-                    innerRadius={outerRadius + 6}
-                    outerRadius={outerRadius + 10}
-                    fill={fill}
-                    opacity={0.7}
-                />
-                <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
-                <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
-                <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} textAnchor={textAnchor} fill="#888">
-                    {`${payload.name}: ${value}`}
-                </text>
-                <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={18} textAnchor={textAnchor} fill="#999">
-                    {`(${(percent * 100).toFixed(0)}%)`}
-                </text>
-            </g>
-        );
-    };
 
     // Show loading skeleton if data is loading
     if (loading) {
@@ -264,60 +155,6 @@ const TaskStatistics = () => {
                     </div>
                 </CardContent>
             </Card>
-
-            {/* Weekly Trends Chart */}
-            {/* <Card className="col-span-3">
-                <CardHeader className="pb-2">
-                    <CardTitle>Weekly Trends</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="h-60">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={weeklyTrendsData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                                <defs>
-                                    <linearGradient id="colorCompleted" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorPending" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#eab308" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#eab308" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                                <XAxis dataKey="name" />
-                                <YAxis />
-                                <Tooltip
-                                    formatter={(value, name) => {
-                                        return [value, name.charAt(0).toUpperCase() + name.slice(1)];
-                                    }}
-                                />
-                                <Legend
-                                    wrapperStyle={{
-                                        padding: '10px 0'
-                                    }}
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="completed"
-                                    stroke="#16a34a"
-                                    strokeWidth={2}
-                                    fillOpacity={1}
-                                    fill="url(#colorCompleted)"
-                                />
-                                <Area
-                                    type="monotone"
-                                    dataKey="pending"
-                                    stroke="#eab308"
-                                    strokeWidth={2}
-                                    fillOpacity={1}
-                                    fill="url(#colorPending)"
-                                />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </CardContent>
-            </Card> */}
 
             {/* Task Priority Distribution */}
             <Card className="col-span-3 md:col-span-2">

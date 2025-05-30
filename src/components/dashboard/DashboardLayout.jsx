@@ -64,12 +64,10 @@ const DashboardLayout = () => {
                 </div>
             )}
 
-            {/* Statistics Section - Full Width */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <TaskStatistics />
             </div>
 
-            {/* Task Management Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <Card className="border shadow-sm">

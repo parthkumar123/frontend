@@ -31,16 +31,6 @@ export function NavBar() {
                             >
                                 Dashboard
                             </Link>
-                            <Link
-                                href="/profile"
-                                className={
-                                    pathname === "/profile"
-                                        ? "text-primary font-medium"
-                                        : "text-muted-foreground"
-                                }
-                            >
-                                Profile
-                            </Link>
                         </nav>
                     )}
                 </div>
@@ -58,9 +48,6 @@ export function NavBar() {
                     )}
                     {isAuthenticated && (
                         <>
-                            <Button variant="outline" size="sm" asChild>
-                                <Link href="/profile">My Profile</Link>
-                            </Button>
                             <Button
                                 variant="ghost"
                                 size="sm"
