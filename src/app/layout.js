@@ -16,8 +16,44 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Dashboard",
+  title: {
+    template: '%s | Task Manager',
+    default: 'Task Manager',
+  },
   description: "Dashboard for managing your tasks and projects",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: { url: '/favicon/apple-touch-icon.png', sizes: '180x180' },
+    other: [
+      {
+        rel: 'mask-icon',
+        url: '/favicon/safari-pinned-tab.svg',
+        color: '#2563eb'
+      }
+    ]
+  },
+  manifest: '/site.webmanifest',
+  applicationName: 'Task Manager',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Task Manager'
+  },
+  formatDetection: {
+    telephone: false
+  },
+};
+
+export const viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' }
+  ],
 };
 
 export default function RootLayout({ children }) {
