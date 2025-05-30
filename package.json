@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "set APP_ENV=development&& set NODE_MODE=development&& node app.js",
+    "build": "set APP_ENV=production&& set NODE_MODE=production&& next build",
     "build:development": "set APP_ENV=development&& set NODE_MODE=production&& next build",
     "build:staging": "set APP_ENV=staging&& set NODE_MODE=production&& next build",
     "build:production": "set APP_ENV=production&& set NODE_MODE=production&& next build",
+    "start": "set APP_ENV=production&& set NODE_MODE=production&& node app.js",
     "dev:start": "set APP_ENV=development&& set NODE_MODE=production&& node app.js",
     "stag:start": "set APP_ENV=staging&& set NODE_MODE=production&& node app.js",
     "prod:start": "set APP_ENV=production&& set NODE_MODE=production&& node app.js",
